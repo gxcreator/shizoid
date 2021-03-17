@@ -26,6 +26,7 @@ module.exports = function (sequelize) {
                     let Word = sequelize.import('./word');
                     let Reply = sequelize.import('./reply');
                     let response = await Word.learn(message.words);
+                    let chatId = message.chatId ? message.chatId : message.chat.get('id');
                     let words = message.words.reduce(
                         (acc, word) => {
                             acc.push(response[word].get('id'));
@@ -42,12 +43,14 @@ module.exports = function (sequelize) {
 
                     while (_.size(words)) {
                         let [first, second, last] = _.take(words, 3);
+                        
                         words.shift();
+                        console.log(`F: ${first} S: ${second}`);
                         try {
                             let pair = (
                                 await self.findOrCreate({
                                     where: {
-                                        ChatId: message.chat.get('id'),
+                                        ChatId: chatId,
                                         firstId: first,
                                         secondId: second,
                                     },
@@ -68,7 +71,7 @@ module.exports = function (sequelize) {
                                 reply.increment('counter');
                             }
                         } catch (e) {
-                            console.log(e);
+                            console.log("[message.id] "+ e);
                         }
                     }
                 },
@@ -100,6 +103,8 @@ module.exports = function (sequelize) {
                     let self = this;
                     let Word = sequelize.import('./word');
                     let usingWords = _.difference(message.words, config.punctuation.endSentence.split(''));
+
+                    //console.log(message);
 
                     let response = await Word.findAll({
                         where: {

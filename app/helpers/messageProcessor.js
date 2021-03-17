@@ -8,6 +8,7 @@ class MessageProcessor {
   message = null;
 
   constructor(ctx, text) {
+    //console.dir(ctx);
     this.ctx = ctx;
     this.message = ctx.message;
     this.text = text || this.message.text;
@@ -44,8 +45,11 @@ class MessageProcessor {
   async process() {
     this.chat = await models.Chat.getChat(this.message);
     if (this.notEmpty()) {
+      console.log("Learn: " + this.message.id);
       await models.Pair.learn(this);
       if (this.hasAnchors() || this.isReplyToBot() || this.randomOK()) {
+        if (typeof this.ctx.replyWithChatAction !== "function") return;
+        console.log("Set typing...");
         this.ctx.replyWithChatAction("typing");
         let replyArray = await this.generateAnswer();
         if (!replyArray.length || !replyArray[0].length) {
@@ -77,6 +81,7 @@ class MessageProcessor {
 
 const setupMessageProcessor = (bot) => {
   bot.on("message", (ctx) => {
+    console.dir(ctx.message);
     let mp = new MessageProcessor(ctx);
     mp.process();
   });
